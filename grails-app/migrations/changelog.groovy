@@ -159,4 +159,6 @@ databaseChangeLog = {
 	include file: 'authorization.groovy'
 
 	include file: 'reference-type.groovy'
+
+	include file: 'property-boundries.groovy'
 }

@@ -50,9 +50,21 @@ class Property implements Measurable, Advisable {
 	 * Unit required for computations in the application
 	 */
 	Unit unit
+
+	/**
+	 * MinimumValue to establishing value boundaries for property
+	 */
+	BigDecimal minimumValue
+
+	/**
+	 * MaximummValue to establishing value boundaries for property
+	 */
+	BigDecimal maximumValue
 	
     static constraints = {
 		unit nullable: true
+		minimumValue nullable: true
+		maximumValue nullable: true
     }
 	
 	/**

@@ -177,15 +177,15 @@ class Food4meController {
 			language = "en"
 
 		// If the language is not supported, return 404
-		if( !AdviceText.isLanguageSupported( language ) ) {
+		if( AdviceText.count() != 0 && !AdviceText.isLanguageSupported( language ) ) {
 			response.status = 404
 			render ""
 			return
 		}
-		
+
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language )
+			html { [ advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: referenceService.getReferences( measurements.all*.property, measurements ) ] }
 			json { render structuredSerializationService.serializeAdvices( advices, language ) as JSON }
 		}
 	}
