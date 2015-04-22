@@ -5,7 +5,7 @@
 		<title>Food4me advices</title>
 	</head>
 	<body>
-		<h1>Food4me advices (${advices.size()})</h1>
+		<h1>Food4me adviezen (${advices.size()})</h1>
 		
 		<div id="advices">
 			<ul>
@@ -18,13 +18,19 @@
 			</ul>
 		</div>
 		
-		<h1>Measurements</h1>
+		<h1>Metingen</h1>
 		<div class="measurements">
 			<ul>
 				<g:set var="i" value="0"/>
 				<g:set var="filteredMeasurements" value="${measurements.all.findAll() { !(it.property instanceof eu.qualify.food4me.ModifiedProperty) }}"/>
 				<g:each in="${filteredMeasurements*.property*.propertyGroup.unique() }" var="propertyGroup">
-					<h1>${propertyGroup}</h1>
+					<h1>
+						<g:if test="${propertyGroup.equals('Generic')}">Algemeen</g:if>
+						<g:elseif test="${propertyGroup.equals('Nutrient')}">Voedingsmiddel</g:elseif>
+						<g:elseif test="${propertyGroup.equals('Physical')}">Fysiek</g:elseif>
+						<g:elseif test="${propertyGroup.equals('Foodgroup')}">Voedselgroep</g:elseif>
+						<g:else>${propertyGroup}</g:else>
+					</h1>
 					<g:each in="${filteredMeasurements.findAll() { it.property.propertyGroup.equals(propertyGroup) } }" var="measurement">
 						<g:set var="i" value="${i+1}"/>
 						<li>
