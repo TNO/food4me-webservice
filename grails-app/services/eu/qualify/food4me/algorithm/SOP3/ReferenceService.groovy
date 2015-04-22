@@ -41,10 +41,8 @@ class ReferenceService {
 	 * @return
 	 */
 	public Map<Measurable, List<ReferenceValue>> getReferences( List<Measurable> entities, Measurements measurements ) {
-//		def age = Property.findByEntity( 'Age' )
-		def age = Property.findByEntity( 'Leeftijd' )
-//		def gender = Property.findByEntity( 'Gender' )
-		def gender = Property.findByEntity( 'Geslacht' )
+		def age = Property.findByEntity( 'Age' )
+		def gender = Property.findByEntity( 'Gender' )
 
 		if( !age || !gender ) {
 			log.error "No age or gender is present in the database, but they are required to retrieve references"
