@@ -210,7 +210,7 @@
 			%>
 
 			<g:each in="${advices}" var="advice">
-				<li>
+				<li style="list-style: none">
 					<%
 						def type = (advice.code =~ /^([A-Za-z0-9]+\.[0-9]+)\..+$/)[0][1]
 					%>
