@@ -13,6 +13,7 @@
 					<th>Measured value</th>
 					<th>Status</th>
 					<th>Reference</th>
+					<th>Linked advices</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -36,6 +37,9 @@
 									</span>
 								</g:each>
 							</g:if>							
+						</td>
+						<td>
+							${eu.qualify.food4me.decisiontree.Advice.findAllBySubject(measurementStatus.entity).code.unique().sort().join(', ')}
 						</td>
 					</tr>
 				</g:each>
