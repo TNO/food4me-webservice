@@ -38,8 +38,8 @@
 								</g:each>
 							</g:if>							
 						</td>
-						<td>
-							${eu.qualify.food4me.decisiontree.Advice.findAllBySubject(measurementStatus.entity).code.unique().sort().join(', ')}
+						<g:i>
+							<g:if test="${measurementStatus.entity instanceof eu.qualify.food4me.Property}">${eu.qualify.food4me.decisiontree.Advice.findAllBySubject(measurementStatus.entity).code.unique().sort().join(', ')}</g:if>
 						</td>
 					</tr>
 				</g:each>

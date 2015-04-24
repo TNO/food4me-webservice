@@ -48,7 +48,12 @@
 										valuePointer = 295
 									}
 									else {
-										valuePointer = ((value - barMin)/barRange)*300
+										if (barRange == 0) {
+											valuePointer = ((value - barMin))*300
+										}
+										else {
+											valuePointer = ((value - barMin)/barRange)*300
+										}
 
 										if (valuePointer < 0) {
 											valuePointer = 0
