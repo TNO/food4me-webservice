@@ -35,21 +35,11 @@ grails.project.dependency.resolution = {
     repositories {
         inherits true // Whether to inherit repository definitions from plugins
 
-        //Temporary fix due to a bug in using proxy settings in Grails 2.4.4.
-        //Since grailsCentral() & mavenCentral() both default to https.
-        //This temporary fix sets the static non-https version for these repos.
-        //See: jira.grails.org/browse/GRAILS-11841
-
-//        grailsPlugins()  //Only needed for Ivy, using Maven
-//        grailsHome()     //Only needed for Ivy, using Maven
-//        mavenLocal()     //Only needed for Ivy, using Maven
-
-//        grailsCentral()
-        mavenRepo "http://repo.grails.org/grails/plugins"
-//        mavenCentral()
-        mavenRepo "http://repo1.maven.org/maven2"
-
-
+        grailsPlugins()
+        grailsHome()
+        mavenLocal()
+        grailsCentral()
+        mavenCentral()
         // uncomment these (or add new ones) to enable remote dependency resolution from public Maven repositories
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
