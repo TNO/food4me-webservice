@@ -177,7 +177,7 @@ class Food4meController {
 			language = "en"
 
 		// If the language is not supported, return 404
-		if( !AdviceText.isLanguageSupported( language ) ) {
+		if( AdviceText.count() != 0 && !AdviceText.isLanguageSupported( language ) ) {
 			response.status = 404
 			render ""
 			return
