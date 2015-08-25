@@ -191,10 +191,14 @@ class Food4meController {
 			render ""
 			return
 		}
+
+        def references = referenceService.getReferences( measurements.all*.property, measurements )
+
+        def userId = params.userId
 		
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: referenceService.getReferences( measurements.all*.property, measurements ), userId: params.userId
+			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId
 			json { render serializer.serializeAdvices( advices, language ) as JSON }
 		}
 	}
