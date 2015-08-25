@@ -43,7 +43,7 @@ class ReferenceService {
 	public Map<Measurable, List<ReferenceValue>> getReferences( List<Measurable> entities, Measurements measurements ) {
 		def age = Property.findByEntity( 'Age' )
 		def gender = Property.findByEntity( 'Gender' )
-		
+
 		if( !age || !gender ) {
 			log.error "No age or gender is present in the database, but they are required to retrieve references"
 			return null
@@ -132,7 +132,7 @@ class ReferenceService {
 					return 1
 					
 				
-				// If the values for low are equal (probably both NULL), check the high velus
+				// If the values for low are equal (probably both NULL), check the high values
 				if( aCondition.low == bCondition.low ) {
 					// If one of the high values is NULL, put that one last
 					if( aCondition.high == null )

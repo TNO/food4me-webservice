@@ -182,10 +182,10 @@ class Food4meController {
 			render ""
 			return
 		}
-		
+
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language )
+			html { [ advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: referenceService.getReferences( measurements.all*.property, measurements ), userId: params.userId ] }
 			json { render structuredSerializationService.serializeAdvices( advices, language ) as JSON }
 		}
 	}
