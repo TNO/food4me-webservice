@@ -4,9 +4,19 @@
 		<title>Food4me advices</title>
 	</head>
 	<body>
-		<h1>Generate food4me advice</h1>
-		
+		<h1 style="font-size: 180%; font-weight: 400">Persoonlijk dieetadvies</h1>
 		<g:form action="advices" params="${[language: language]}" name="generate_advices" method="get">
+			<fieldset>
+				<legend>Personal Information</legend>
+				<ul>
+					<li>
+						<label for="user_id">
+							Deelnemersnummer:
+						</label>
+						<input id="user_id" type="text" name="userId" />
+					</li>
+				</ul>
+			</fieldset>
 			<fieldset>
 				<legend>Nutrients</legend>
 				

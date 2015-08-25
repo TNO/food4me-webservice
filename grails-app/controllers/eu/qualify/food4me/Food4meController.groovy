@@ -36,7 +36,7 @@ import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class Food4meController {
-	
+
 	// Services where the real action happens. See conf/spring/resources.groovy
 	StatusComputer statusComputer
 	AdvisableDeterminer advisableDeterminer
@@ -47,7 +47,7 @@ class Food4meController {
 	Serializer serializer
 
 	def derivedMeasurementsService
-	
+
 	def referenceService
 	
 	/**
@@ -194,7 +194,7 @@ class Food4meController {
 		
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language )
+			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: referenceService.getReferences( measurements.all*.property, measurements ), userId: params.userId
 			json { render serializer.serializeAdvices( advices, language ) as JSON }
 		}
 	}

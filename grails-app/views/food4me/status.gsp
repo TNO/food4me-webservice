@@ -13,6 +13,7 @@
 					<th>Measured value</th>
 					<th>Status</th>
 					<th>Reference</th>
+					<th>Linked advices</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -36,6 +37,8 @@
 									</span>
 								</g:each>
 							</g:if>							
+						</td>
+							<g:if test="${measurementStatus.entity instanceof eu.qualify.food4me.Property}">${eu.qualify.food4me.decisiontree.Advice.findAllBySubject(measurementStatus.entity).code.unique().sort().join(', ')}</g:if>
 						</td>
 					</tr>
 				</g:each>
