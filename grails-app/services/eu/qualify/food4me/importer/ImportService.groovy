@@ -428,7 +428,7 @@ class ImportService {
 			
 			// Generate objects for all advices
 			adviceConditions.each { conditionSet ->
-				def advice = new Advice( code: line[0], subject: structure.adviceSubject )
+				def advice = new Advice( code: toAdviceCode(line[0]), subject: structure.adviceSubject ) 
 
                 storedLog.trace "  Generating advice with conditions + " + conditionSet
 				
@@ -557,7 +557,7 @@ class ImportService {
 				adviceText.text = line[1]
 			} else {
                 storedLog.trace "Importing new for " + adviceCode + " in " + language
-				adviceText = new AdviceText( code: adviceCode, language: language, text: line[1] )
+				adviceText = new AdviceText( code: toAdviceCode(adviceCode), language: language, text: line[1] )
 			}
 			
 			objects << adviceText
@@ -815,6 +815,15 @@ class ImportService {
 		
 		cleanUpGORM()
 		return numSaves
+	}
+	
+	/**
+	 * Prepares an advice code for storage in the database
+	 * @param code
+	 * @return
+	 */
+	protected String toAdviceCode(code) {
+		code.replaceAll( /\./, "_" )
 	}
 	
 	protected def disableTriggers( String table ) {
