@@ -38,35 +38,54 @@
 		<p>
 			This page allows the administrator to perform certain tasks. Please use with care!
 		</p>
-		
-		<br />
-		
+
+		<h3 class="admin">Load data</h3>
+		<table class="admin">
+			<thead>
+				<tr><th>Data on server</th><th>Custom data</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<g:form action="importAll">
+							<input type="submit" value="Import all data" />
+						</g:form>
+
+						<g:form action="importReferenceData">
+							<input type="submit" value="Import reference data only" />
+						</g:form>
+
+						<g:form action="importDecisionTrees">
+							<input type="submit" value="Import decision trees" />
+						</g:form>
+
+						<g:form action="importTranslations">
+							<input type="submit" value="Import advice translations" />
+						</g:form>
+					</td>
+					<td>
+						<g:uploadForm action="importAll">
+							<input type="file" name="zipfile" />
+							<input type="submit" value="Import custom data" />
+						</g:uploadForm>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<hr />
+		<h3 class="admin">Load example data</h3>
+		<g:form action="importExampleData">
+			<input type="submit" value="Load example data" />
+		</g:form>
+
+		<hr />
+		<h3 class="admin">Clear database</h3>
+
 		<g:form action="clearAll">
 			<input type="submit" value="Clear the database" />
 		</g:form>
 
-		<hr />
-		
-		<g:form action="importExampleData">
-			<input type="submit" value="Load example data" />
-		</g:form>
-	
-		<hr />
-		
-		<g:form action="importAll">
-			<input type="submit" value="Import all data" />
-		</g:form>
-		
-		<g:form action="importReferenceData">
-			<input type="submit" value="Import reference data only" />
-		</g:form>
-		
-		<g:form action="importDecisionTrees">
-			<input type="submit" value="Import decision trees" />
-		</g:form>
-		
-		<g:form action="importTranslations">
-			<input type="submit" value="Import advice translations" />
-		</g:form>	
+
 	</body>
 </html>

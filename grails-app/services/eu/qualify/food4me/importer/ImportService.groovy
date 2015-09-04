@@ -734,6 +734,53 @@ class ImportService {
 		
 		baseDir.eachFileMatch matcher, fileHandler
 	}
+
+    /**
+     * Unzips the uploaded zip file into a temporary directory
+     * @param uploadedFile
+     * @return The directory where the file is unzipped
+     */
+    public File unzipUploadedFile(def uploadedFile) {
+        def directory = getNewTemporaryFile()
+
+        // Create the temporary directory
+        directory.mkdirs()
+
+        println "Unzipping file to " + directory.absolutePath
+
+        // Move the file to the temporary directory, as we need a File to unzip it
+        def file = getNewTemporaryFile("zip")
+        uploadedFile.transferTo(file)
+
+        // Unzip the file to that directory
+        def u = new org.apache.ant.compress.taskdefs.Unzip()
+        u.setSrc(file)
+        u.setDest(directory)
+        u.execute()
+
+        directory
+    }
+
+    protected File getNewTemporaryFile(String extension = null) {
+        // Start by defining a new temporary directory
+        def rootDirectory = grailsApplication.config.food4me.tmpDirectory
+        def subFilename
+        def file
+
+        while(true) {
+            subFilename = java.util.UUID.randomUUID() as String
+
+            if( extension )
+                subFilename += "." + extension
+
+            file = new File( rootDirectory + "/" + subFilename )
+
+            if( !file.exists() )
+                break
+        }
+
+        file
+    }
 	
 	/**
 	 * Store a set of objects and cleanup GORM afterwards

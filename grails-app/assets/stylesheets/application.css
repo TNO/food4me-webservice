@@ -11,3 +11,8 @@
 *= require mobile
 *= require_self
 */
+
+form { margin: 0.4em 0; }
+h3.admin { margin-top: 10px; margin-bottom: 5px; }
+table.admin { width: 650px; }
+table.admin tr:hover { background-color: inherit; }
