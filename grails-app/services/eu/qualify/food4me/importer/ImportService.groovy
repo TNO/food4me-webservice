@@ -16,6 +16,7 @@
  */
 package eu.qualify.food4me.importer
 
+import eu.qualify.food4me.StoredLog
 import eu.qualify.food4me.Property
 import eu.qualify.food4me.Unit
 import eu.qualify.food4me.decisiontree.Advice
@@ -37,7 +38,10 @@ class ImportService {
 	
 	int batchSize = 50
 	String separatorChar = "\t"
-	
+
+    // Logger object that stored the messages in addition to logging them to log4j
+    StoredLog storedLog = new StoredLog(log)
+
 	def loadAll( String directory = null ) {
 		loadUnitsFromDirectory( directory )
 		loadPropertiesFromDirectory( directory )
@@ -57,22 +61,22 @@ class ImportService {
 		
 		inputStream.toCsvReader([skipLines: 1, separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 3 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
 			// Check if a unit with this externalId already exists
 			def externalId = line[2] ?: line[3]
 			if( Unit.countByExternalId( externalId ) > 0 || externalId in alreadyImportedIds) {
-				log.info( "Skip importing unit " + line[0] + " / " + externalId + " because it already exists" )
+                storedLog.info( "Skip importing unit " + line[0] + " / " + externalId + " because it already exists" )
 			} else {
 				units << new Unit( name: line[0], externalId: externalId, code: line[1] )
-				log.trace( "Importing unit " + line[0] + " / " + externalId )
+                storedLog.trace( "Importing unit " + line[0] + " / " + externalId )
 				alreadyImportedIds << externalId
 			}
 				 
@@ -97,12 +101,12 @@ class ImportService {
 		
 		inputStream.toCsvReader([skipLines: 1, separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 3 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
@@ -110,13 +114,13 @@ class ImportService {
 			// We use the snomedct id initially, but if it is not given, we use the EuroFIR code
 			def externalId = line[2] ?: line[3]
 			if( !externalId ) {
-				log.warn "Skipping line with property " + line[0] + " as it has no external identifier"
+                storedLog.warn "Skipping line with property " + line[0] + " as it has no external identifier"
 				return
 			}
 			
 			// Check if a property with this externalId already exists
 			if( Property.countByExternalId( externalId ) > 0 || externalId in alreadyImportedIds ) {
-				log.info( "Skip importing property " + line[0] + " (" + externalId + ") because it already exists" )
+                storedLog.info( "Skip importing property " + line[0] + " (" + externalId + ") because it already exists" )
 			} else {
 				// Find the unit to use for this property
 				def unitCode = line.size() >= 5 ? line[4] : null
@@ -125,14 +129,14 @@ class ImportService {
 				if( unitCode ) {
 					unit = Unit.findByCode( unitCode )
 					if( !unit ) {
-						log.warn "Unit " + unitCode + " for property " + line[0] + " can not be found. Consider importing units first."
+                        storedLog.warn "Unit " + unitCode + " for property " + line[0] + " can not be found. Consider importing units first."
 						return;
 					}
 				}
 				
 				properties << new Property( entity: line[0], propertyGroup: line[1], externalId: externalId, unit: unit )
 				alreadyImportedIds << externalId
-				log.trace( "Importing property " + line[0] + " / " + line[1] + " with external ID " + externalId )
+                storedLog.trace( "Importing property " + line[0] + " / " + line[1] + " with external ID " + externalId )
 			}
 				 
 			if( properties.size() >= batchSize ) {
@@ -159,12 +163,12 @@ class ImportService {
 		// The first 2 lines contain the headers
 		inputStream.toCsvReader([skipLines: 2, separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 5 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
@@ -172,7 +176,7 @@ class ImportService {
 			def property = Property.findByEntityAndPropertyGroup( line[0], line[1] )
 			
 			if( !property ) {
-				log.warn "Cannot find entity " + line[0] + " / " + line[1] + " when importing reference. Skipping this line"
+                storedLog.warn "Cannot find entity " + line[0] + " / " + line[1] + " when importing reference. Skipping this line"
 				return
 			}
 			
@@ -187,11 +191,11 @@ class ImportService {
 			
 			// Check whether we have the properties for the requested conditions
 			if( age && !ageProperty ) {
-				log.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
+                storedLog.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
 				return
 			}
 			if( gender && !genderProperty ) {
-				log.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
+                storedLog.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
 				return
 			}
 			
@@ -206,7 +210,7 @@ class ImportService {
 			statusses.each { status ->
 				// If no status color is given for this status, we skip this status
 				if( line.size() <= currentColumnIndex || !line[ currentColumnIndex ] ) {
-					log.trace "Status " + status + " not found for property " + property
+                    storedLog.trace "Status " + status + " not found for property " + property
 					currentColumnIndex += 2
 					return
 				}
@@ -228,7 +232,7 @@ class ImportService {
 				// Add the condition on the property itself
 				reference.addToConditions( new ReferenceCondition( subject: property, low: currentLowerBoundary, high: higherBoundary, conditionType: ReferenceCondition.TYPE_NUMERIC ) )
 
-				log.trace( "Importing reference for " + property + " / " + status + " with " + reference.conditions?.size() + " conditions " + currentLowerBoundary + " / " + higherBoundary  )
+                storedLog.trace( "Importing reference for " + property + " / " + status + " with " + reference.conditions?.size() + " conditions " + currentLowerBoundary + " / " + higherBoundary  )
 				references << reference
 				
 				// Prepare for next iteration
@@ -258,7 +262,7 @@ class ImportService {
 		def columnStatus = [:]
 		inputStream.toCsvReader([separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 2 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
@@ -279,7 +283,7 @@ class ImportService {
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
@@ -287,7 +291,7 @@ class ImportService {
 			def snp = Property.findByEntityAndPropertyGroup( line[0], Property.PROPERTY_GROUP_SNP )
 			
 			if( !snp ) {
-				log.warn "Cannot find SNP " + line[0] + " when importing reference. Skipping this line"
+                storedLog.warn "Cannot find SNP " + line[0] + " when importing reference. Skipping this line"
 				return
 			}
 			
@@ -299,8 +303,8 @@ class ImportService {
 					
 					// Color is not relevant for SNPs, but we store a color anyhow
 					def color = ( status == "Risk allele" ) ? Status.Color.RED : Status.Color.GREEN
-					
-					log.trace "Storing SNP " + line[0] + " / " + line[ columnNo ] + " as " + status
+
+                    storedLog.trace "Storing SNP " + line[0] + " / " + line[ columnNo ] + " as " + status
 					
 					def reference = new ReferenceValue(subject: snp, status: status, color: color )
 					reference.addToConditions( new ReferenceCondition( subject: snp, value: line[ columnNo ], conditionType: ReferenceCondition.TYPE_TEXT ) )
@@ -345,7 +349,7 @@ class ImportService {
 		
 		inputStream?.toCsvReader([skipLines: 0, separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 2 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
@@ -368,7 +372,7 @@ class ImportService {
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
@@ -417,16 +421,16 @@ class ImportService {
 			}
 						
 			if( !conditions || !conditions.findAll() ) {
-				log.warn "No conditions are found for advice with code " + line[0]
+                storedLog.warn "No conditions are found for advice with code " + line[0]
 			}
 			// Generate combinations of all conditions
 			def adviceConditions = conditions.combinations()
 			
 			// Generate objects for all advices
 			adviceConditions.each { conditionSet ->
-				def advice = new Advice( code: line[0], subject: structure.adviceSubject ) 
-				
-				log.trace "  Generating advice with conditions + " + conditionSet
+				def advice = new Advice( code: line[0], subject: structure.adviceSubject )
+
+                storedLog.trace "  Generating advice with conditions + " + conditionSet
 				
 				conditionSet.eachWithIndex { conditionValue, index ->
 					if( conditionValue ) {
@@ -465,12 +469,12 @@ class ImportService {
 		]
 		
 		if( headerLines.size() != 3 ) {
-			log.error "Invalid number of header lines for decision tree: " + headerLines.size() + " lines. Skipping import of this file"
+            storedLog.error "Invalid number of header lines for decision tree: " + headerLines.size() + " lines. Skipping import of this file"
 			return null
 		}
 		
 		if( headerLines[0].size() != headerLines[1].size() || headerLines[0].size() != headerLines[2].size() ) {
-			log.error "Invalid format of header lines for decision tree: all header lines should be equal length. Sizes are: " + headerLines.collect { it.size() } + ". Skipping import of this file."
+            storedLog.error "Invalid format of header lines for decision tree: all header lines should be equal length. Sizes are: " + headerLines.collect { it.size() } + ". Skipping import of this file."
 			return null
 		}
 		
@@ -478,7 +482,7 @@ class ImportService {
 		decisionTreeStructure.adviceSubject = Property.findByEntity( headerLines[0][0].trim() )
 		
 		if( !decisionTreeStructure.adviceSubject ) {
-			log.warn "No property could be found for advice subject " + headerLines[0][0] + ". Skipping import of this file."
+            storedLog.warn "No property could be found for advice subject " + headerLines[0][0] + ". Skipping import of this file."
 			return
 		}
 
@@ -490,7 +494,7 @@ class ImportService {
 				conditionProperty = Property.findByEntity( headerLines[0][columnNo].trim() )
 				
 				if( !conditionProperty ) {
-					log.warn "Cannot find property for column ${columnNo}: " + headerLines[0][columnNo] + ". Skipping import of this file."
+                    storedLog.warn "Cannot find property for column ${columnNo}: " + headerLines[0][columnNo] + ". Skipping import of this file."
 					return null
 				}
 				
@@ -498,7 +502,7 @@ class ImportService {
 				
 				// Check whether we know any references for the given property. If not, the status should be given by the user
 				if( !filterOnValue && ReferenceValue.countBySubject( conditionProperty ) == 0 ) {
-					log.warn "Cannot find any references for " + headerLines[0][columnNo] + ". This means that we can't determine a status for this variable automatically."
+                    storedLog.warn "Cannot find any references for " + headerLines[0][columnNo] + ". This means that we can't determine a status for this variable automatically."
 				}
 				
 				decisionTreeStructure.conditionSubjects[ columnNo ] = [
@@ -528,12 +532,12 @@ class ImportService {
 		
 		inputStream.toCsvReader([skipLines: 0, separatorChar: separatorChar]).eachLine { line ->
 			if( !line || line.size() < 2 ) {
-				log.warn "Skipping line as it has not enough columns: " + line?.size()
+                storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
 			
 			if( !line[0] ) {
-				log.trace "Skipping empty line"
+                storedLog.trace "Skipping empty line"
 				return
 			}
 			
@@ -542,17 +546,17 @@ class ImportService {
 			def translation = line[1]?.trim()
 			
 			if( !translation ) {
-				log.warn "Skipping translation for code " + adviceCode + " as it is empty"
+                storedLog.warn "Skipping translation for code " + adviceCode + " as it is empty"
 				return
 			}
 			
 			// Check if the translation already exists. If so, overwrite
 			def adviceText = AdviceText.findByCodeAndLanguage( adviceCode, language )
 			if( adviceText ) {
-				log.trace "Overwriting translation for " + adviceCode + " in " + language
+                storedLog.trace "Overwriting translation for " + adviceCode + " in " + language
 				adviceText.text = line[1]
 			} else {
-				log.trace "Importing new for " + adviceCode + " in " + language
+                storedLog.trace "Importing new for " + adviceCode + " in " + language
 				adviceText = new AdviceText( code: adviceCode, language: language, text: line[1] )
 			}
 			
@@ -574,10 +578,10 @@ class ImportService {
 	 * @return
 	 */
 	def loadUnitsFromDirectory( String directory = null ) {
-		log.info "Start loading units " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading units " + ( directory ? " from " + directory : "" )
 		
 		importData( directory, ~/units.*\.txt/, { file ->
-			log.info( "Loading units from " + file )
+            storedLog.info( "Loading units from " + file )
 			file.withInputStream { is -> loadUnits( is ) }
 		})
 	}
@@ -587,10 +591,10 @@ class ImportService {
 	 * @return
 	 */
 	def loadPropertiesFromDirectory( String directory = null ) {
-		log.info "Start loading properties " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading properties " + ( directory ? " from " + directory : "" )
 		
 		importData( directory, ~/properties.*\.txt/, { file ->
-			log.info( "Loading properties from " + file )
+            storedLog.info( "Loading properties from " + file )
 			file.withInputStream { is -> loadProperties( is ) }
 		})
 	}
@@ -611,20 +615,20 @@ class ImportService {
 	 * @return
 	 */
 	def loadGenericReferencesFromDirectory( String directory = null ) {
-		log.info "Start loading generic references " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading generic references " + ( directory ? " from " + directory : "" )
 		
 		// First disable the trigger for advice conditions, as that slows down the import heavily
-		log.info "Disabling trigger on reference_condition"
+        storedLog.info "Disabling trigger on reference_condition"
 		disableTriggers "reference_condition"
 		
 		try {
 			importData( directory, ~/references-generic.*\.txt/, { file ->
-				log.info( "Loading generic references from " + file )
+                storedLog.info( "Loading generic references from " + file )
 				file.withInputStream { is -> loadGenericReferences( is ) }
 			})
 		} finally {
 			// Re enable the trigger for advice conditions
-			log.info "Re enabling trigger on reference_condition"
+            storedLog.info "Re enabling trigger on reference_condition"
 			enableTriggers "reference_condition"
 		}
 		
@@ -635,20 +639,20 @@ class ImportService {
 	 * @return
 	 */
 	def loadSNPReferencesFromDirectory( String directory = null ) {
-		log.info "Start loading SNP references " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading SNP references " + ( directory ? " from " + directory : "" )
 		
 		// First disable the trigger for advice conditions, as that slows down the import heavily
-		log.info "Disabling trigger on reference_conditoin"
+        storedLog.info "Disabling trigger on reference_conditoin"
 		disableTriggers "reference_condition"
 		
 		try {
 			importData( directory, ~/references-snps.*\.txt/, { file ->
-				log.info( "Loading SNP references from " + file )
+                storedLog.info( "Loading SNP references from " + file )
 				file.withInputStream { is -> loadSNPReferences(is) }
 			})
 		} finally {
 			// Re enable the trigger for advice conditions
-			log.info "Re enabling trigger on reference_condition"
+            storedLog.info "Re enabling trigger on reference_condition"
 			enableTriggers "reference_condition"
 		}
 	}
@@ -658,18 +662,18 @@ class ImportService {
 	 * @return
 	 */
 	def loadAdviceTextsFromDirectory( String directory = null ) {
-		log.info "Start loading advice texts " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading advice texts " + ( directory ? " from " + directory : "" )
 		
 		importData( directory, ~/advice-texts.*\.[a-zA-Z]+\.txt$/, { file ->
 			def match = file.name =~ /([a-zA-Z]+)\.txt$/
 			if( !match ) {
-				log.warn( "Trying to load advice texts from " + file + " but no proper language was specified" )
+                storedLog.warn( "Trying to load advice texts from " + file + " but no proper language was specified" )
 				return
 			}
 			
 			def language = match[0][1]
-			
-			log.info( "Loading advice texts from " + file + " in language " + language )
+
+            storedLog.info( "Loading advice texts from " + file + " in language " + language )
 			file.withInputStream { is -> loadAdviceTexts(is, language) }
 		})
 	}
@@ -679,20 +683,20 @@ class ImportService {
 	 * @return
 	 */
 	def loadDecisionTreesFromDirectory( String directory = null ) {
-		log.info "Start loading decision trees " + ( directory ? " from " + directory : "" )
+        storedLog.info "Start loading decision trees " + ( directory ? " from " + directory : "" )
 		
 		// First disable the trigger for advice conditions, as that slows down the import heavily
-		log.info "Disabling trigger on advice_condition"
+        storedLog.info "Disabling trigger on advice_condition"
 		disableTriggers "advice_condition"
 		
 		try {
 			importData( directory, ~/decision-trees.*\.txt/, { file ->
-				log.info( "Loading decision trees from " + file )
+                storedLog.info( "Loading decision trees from " + file )
 				file.withInputStream { is -> loadDecisionTrees(is) }
 			})
 		} finally {
 			// Re enable the trigger for advice conditions
-			log.info "Re enabling trigger on advice_condition"
+            storedLog.info "Re enabling trigger on advice_condition"
 			enableTriggers "advice_condition"
 		}
 	
@@ -718,17 +722,17 @@ class ImportService {
 			directory = getDefaultImportDirectory()
 
 			if( !directory ) {
-				log.error "No default directory given to import data from. Please specify the configuration value food4me.importDirectory to a readable directory."
+                storedLog.error "No default directory given to import data from. Please specify the configuration value food4me.importDirectory to a readable directory."
 				return
 			} else {
-				log.info "Importing data from default directory in configuration: " + directory
+                storedLog.info "Importing data from default directory in configuration: " + directory
 			}
 		}
 			
 		def baseDir = new File( directory )
 		
 		if( !baseDir.exists() || !baseDir.isDirectory() || !baseDir.canRead() ) {
-			log.error "Provided directory " + directory + " is not an existing readable directory. Please check your configuration."
+            storedLog.error "Provided directory " + directory + " is not an existing readable directory. Please check your configuration."
 			return
 		}
 		
@@ -745,8 +749,6 @@ class ImportService {
 
         // Create the temporary directory
         directory.mkdirs()
-
-        println "Unzipping file to " + directory.absolutePath
 
         // Move the file to the temporary directory, as we need a File to unzip it
         def file = getNewTemporaryFile("zip")
@@ -792,18 +794,18 @@ class ImportService {
 		def numSaves = 0;
 		
 		if( !objects ) {
-			log.warn "No objects of type " + domainClass?.simpleName + " to store"
+            storedLog.warn "No objects of type " + domainClass?.simpleName + " to store"
 			return
-		} 
-		
-		log.info "Batch saving " + objects.size() + " objects of type " + domainClass?.simpleName 
+		}
+
+        storedLog.info "Batch saving " + objects.size() + " objects of type " + domainClass?.simpleName
 		
 		domainClass.withTransaction {
 			objects.each { object ->
 				if( !object.save() ) {
-					log.error "Unable to save ${domainClass} object in batch: " + object
+                    storedLog.error "Unable to save ${domainClass} object in batch: " + object
 					object?.errors?.allErrors?.each { currentError ->
-						log.error "Error occured on field [${currentError?.field}] - [${currentError?.defaultMessage}] for value [${currentError?.rejectedValue}]"
+                        storedLog.error "Error occured on field [${currentError?.field}] - [${currentError?.defaultMessage}] for value [${currentError?.rejectedValue}]"
 					}
 				} else {
 					numSaves++

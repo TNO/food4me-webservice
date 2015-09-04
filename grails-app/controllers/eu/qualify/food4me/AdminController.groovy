@@ -134,7 +134,12 @@ class AdminController {
             source = "the default directory"
         }
 
+        importService.storedLog.clear()
         importService.loadAll(directory)
+
+        // Show the logs on the screen
+        flash.logTitle = "Import all from " + source
+        flash.logs = importService.storedLog.get()
 
 		flash.message = "All data is imported from " + source
 		redirect action: "index"

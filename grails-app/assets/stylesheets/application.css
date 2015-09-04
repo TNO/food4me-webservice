@@ -13,6 +13,9 @@
 */
 
 form { margin: 0.4em 0; }
-h3.admin { margin-top: 10px; margin-bottom: 5px; }
-table.admin { width: 650px; }
-table.admin tr:hover { background-color: inherit; }
+.admin { padding: 0.2em 0.6em; }
+.admin h3 { margin-top: 10px; margin-bottom: 5px; }
+.admin table { width: 630px; }
+.admin table tr:hover { background-color: inherit; }
+
+.log_messages ul { display: none; }

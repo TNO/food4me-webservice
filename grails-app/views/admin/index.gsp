@@ -34,58 +34,78 @@
 			</ul>			
 			
 		</div>
-		
-		<p>
-			This page allows the administrator to perform certain tasks. Please use with care!
-		</p>
 
-		<h3 class="admin">Load data</h3>
-		<table class="admin">
-			<thead>
-				<tr><th>Data on server</th><th>Custom data</th></tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>
-						<g:form action="importAll">
-							<input type="submit" value="Import all data" />
-						</g:form>
+		<div class="admin">
+			<p>
+				This page allows the administrator to perform certain tasks. Please use with care!
+			</p>
 
-						<g:form action="importReferenceData">
-							<input type="submit" value="Import reference data only" />
-						</g:form>
+			<g:if test="${flash.logs}">
+				<h3>Import logs: ${flash.logTitle}</h3>
+				<ul class="log_messages">
+					<g:each var="level" in="${flash.logs}">
+						<g:if test="${level.key in [ 'info', 'warn', 'error' ]}">
+							<li>
+								<h4>${level.key}</h4>
 
-						<g:form action="importDecisionTrees">
-							<input type="submit" value="Import decision trees" />
-						</g:form>
+								<ul>
+									<g:each var="message" in="${level.value}">
+										<li>${message}</li>
+									</g:each>
+								</ul>
+							</li>
+						</g:if>
+					</g:each>
+				</ul>
+			</g:if>
 
-						<g:form action="importTranslations">
-							<input type="submit" value="Import advice translations" />
-						</g:form>
-					</td>
-					<td>
-						<g:uploadForm action="importAll">
-							<input type="file" name="zipfile" />
-							<input type="submit" value="Import custom data" />
-						</g:uploadForm>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+			<h3>Load data</h3>
+			<table>
+				<thead>
+					<tr><th>Data on server</th><th>Custom data</th></tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							<g:form action="importAll">
+								<input type="submit" value="Import all data" />
+							</g:form>
 
-		<hr />
-		<h3 class="admin">Load example data</h3>
-		<g:form action="importExampleData">
-			<input type="submit" value="Load example data" />
-		</g:form>
+							<g:form action="importReferenceData">
+								<input type="submit" value="Import reference data only" />
+							</g:form>
 
-		<hr />
-		<h3 class="admin">Clear database</h3>
+							<g:form action="importDecisionTrees">
+								<input type="submit" value="Import decision trees" />
+							</g:form>
 
-		<g:form action="clearAll">
-			<input type="submit" value="Clear the database" />
-		</g:form>
+							<g:form action="importTranslations">
+								<input type="submit" value="Import advice translations" />
+							</g:form>
+						</td>
+						<td>
+							<g:uploadForm action="importAll">
+								<input type="file" name="zipfile" />
+								<input type="submit" value="Import custom data" />
+							</g:uploadForm>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 
+			<hr />
+			<h3>Load example data</h3>
+			<g:form action="importExampleData">
+				<input type="submit" value="Load example data" />
+			</g:form>
 
+			<hr />
+			<h3>Clear database</h3>
+
+			<g:form action="clearAll">
+				<input type="submit" value="Clear the database" />
+			</g:form>
+
+		</div>
 	</body>
 </html>
