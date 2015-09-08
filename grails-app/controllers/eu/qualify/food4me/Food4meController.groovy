@@ -293,10 +293,16 @@ class Food4meController {
 	def advices() {
 		Measurements measurements = parser.parseMeasurements(params)
 		derivedMeasurementsService.deriveMeasurements(measurements)
-		
+        println measurements
+
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
+        println status
+
 		List<Advisable> advisables = advisableDeterminer.determineAdvisables(status, measurements )
+        println advisables
+
 		List<Advice> advices = adviceGenerator.generateAdvice( measurements, status, advisables )
+        println advices
 
 		def language = getLanguageFromRequest()
 		if( !language ) return
