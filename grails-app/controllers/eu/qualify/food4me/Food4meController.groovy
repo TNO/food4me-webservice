@@ -44,8 +44,9 @@ class Food4meController {
 	
 	// Services for input and output. See conf/spring/resources.groovy
 	Parser parser
-	Serializer serializer
-
+	Serializer jsonSerializer
+	Serializer halSerializer
+	
 	def derivedMeasurementsService
 
 	def referenceService
@@ -124,7 +125,97 @@ class Food4meController {
 				properties.each { property -> propertyModifiers[ property ] = ModifiedProperty.getAllowedModifiers(property) }
 				[ properties: properties, propertyModifiers: propertyModifiers ]  
 			}
-			json { render serializer.serializeProperties( properties ) as JSON }
+			json { render jsonSerializer.serializeProperties( properties ) as JSON }
+			hal {
+				render text: halSerializer.serializeProperties( properties ) as JSON, contentType: "application/hal+json"
+			}
+		}
+	}
+	
+	/**
+	 * Webservice that returns details about a single property.
+	 * 
+	 * This method is used to have the URL for a property in HAL resolve to a page
+	 *
+	 * The list of properties depends on the data that was loaded
+	 * @return
+	 */
+	def property() {
+		def property = Property.findByExternalId(params.id)
+		
+		if( !property ) {
+			response.status = 404
+			render "Property not found"
+			return
+		}
+		
+		// Use content negotiation to output the data
+		withFormat {
+			html {
+				def propertyModifiers = [(property): ModifiedProperty.getAllowedModifiers(property) ]
+				render view: "properties", model: [ properties: [property], propertyModifiers: propertyModifiers ] 
+			}
+			json { render jsonSerializer.serializeProperty( property ) as JSON }
+			hal {
+				render text: halSerializer.serializeProperty( property ) as JSON, contentType: "application/hal+json"
+			}
+		}
+	}
+	
+	
+	/**
+	 * Webservice that returns details about a single unit.
+	 *
+	 * This method is used to have the URL for a property in HAL resolve to a page
+	 *
+	 * @return
+	 */
+	def units() {
+		def criteria = Unit.createCriteria()
+		
+		def units = criteria.list {
+			and {
+				order('name')
+			}
+		}
+		
+		// Use content negotiation to output the data
+		withFormat {
+			html {
+				[ units: units ]
+			}
+			json { render jsonSerializer.serializeUnits( units ) as JSON }
+			hal {
+				render text: halSerializer.serializeUnits( units ) as JSON, contentType: "application/hal+json"
+			}
+		}
+	}
+	
+	/**
+	 * Webservice that returns details about a single unit.
+	 *
+	 * This method is used to have the URL for a property in HAL resolve to a page
+	 *
+	 * @return
+	 */
+	def unit() {
+		def unit = Unit.findByExternalId(params.id)
+		
+		if( !unit) {
+			response.status = 404
+			render "Unit not found"
+			return
+		}
+		
+		// Use content negotiation to output the data
+		withFormat {
+			html {
+				render view: "units", [ units: [unit] ]
+			}
+			json { render jsonSerializer.serializeUnit( unit ) as JSON }
+			hal {
+				render text: halSerializer.serializeUnit( unit ) as JSON, contentType: "application/hal+json"
+			}
 		}
 	}
 	
@@ -142,7 +233,8 @@ class Food4meController {
 		// Use content negotiation to output the data
 		withFormat {
 			html { [ measurements: measurements, status: status, references: referenceService.getReferences( measurements.all*.property, measurements ) ] }
-			json { render serializer.serializeStatus( status ) as JSON }
+			json { render jsonSerializer.serializeStatus( status ) as JSON }
+			hal { render text: halSerializer.serializeStatus( status ) as JSON, contentType: "application/hal+json" }
 		}
 	}
 
@@ -164,7 +256,33 @@ class Food4meController {
 		// Use content negotiation to output the data
 		withFormat {
 			html entities: entities, references: references, measurements: measurements, secondaryConditions: [ "age", "gender" ]
-			json { render serializer.serializeReferences( references ) as JSON }
+			json { render jsonSerializer.serializeReferences( references ) as JSON }
+			hal { render text: halSerializer.serializeReferences( references, measurements.all.findAll { it.property.rootProperty.entity in [ "Age", "Gender" ] } ) as JSON, contentType: "application/hal+json" }
+		}
+	}
+	
+	/**
+	 * Webservice to return a single reference
+	 * @return
+	 */
+	def reference() {
+		def reference = ReferenceValue.get(params.long("id"))
+		
+		if( !reference ) {
+			response.status = 404
+			render "Reference not found"
+			return
+		}
+		
+		// Use content negotiation to output the data
+		withFormat {
+			html {
+				[reference: reference]
+			}
+			json { render jsonSerializer.serializeReference( reference ) as JSON }
+			hal {
+				render text: halSerializer.serializeReference( reference ) as JSON, contentType: "application/hal+json"
+			}
 		}
 	}
 			
@@ -180,26 +298,62 @@ class Food4meController {
 		List<Advisable> advisables = advisableDeterminer.determineAdvisables(status, measurements )
 		List<Advice> advices = adviceGenerator.generateAdvice( measurements, status, advisables )
 
+		def language = getLanguageFromRequest()
+		if( !language ) return
+
+		def references = referenceService.getReferences( measurements.all*.property, measurements )
+		def userId = params.userId
+
+		// Use content negotiation to output the data
+		withFormat {
+			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId
+			json { render jsonSerializer.serializeAdvices( advices, language ) as JSON }
+			hal { render text: halSerializer.serializeAdvices( advices, language ) as JSON, contentType: "application/hal+json" }
+		}
+	}
+	
+	
+	def advice() {
+		def advice = Advice.findByCode(params.id)
+		
+		log.debug "Finding advice for code [" + params.id + "]: " + advice
+		
+		if( !advice) {
+			response.status = 404
+			render "Advice not found"
+			return
+		}
+		
+		// Determine language
+		def language = getLanguageFromRequest()
+		if( !language ) return
+		
+		// Use content negotiation to output the data
+		withFormat {
+			html {
+				def advices = [advice]
+				render view: "advices", [ advices: advices, translations: AdviceText.getTranslations( advices, language )  ]
+			}
+			json { render jsonSerializer.serializeAdvice( advice, advice.getTranslation(language)) as JSON }
+			hal {
+				render text: halSerializer.serializeAdvice( advice, advice.getTranslation(language) ) as JSON, contentType: "application/hal+json"
+			}
+		}
+	}
+	
+	protected String getLanguageFromRequest() {
 		// Determine output language. Defaults to English
 		def language = params.language
-		if( !language ) 
+		if( !language )
 			language = "en"
 
 		// If the language is not supported, return 404
 		if( AdviceText.count() != 0 && !AdviceText.isLanguageSupported( language ) ) {
 			response.status = 404
 			render ""
-			return
+			return null
 		}
 
-        def references = referenceService.getReferences( measurements.all*.property, measurements )
-
-        def userId = params.userId
-		
-		// Use content negotiation to output the data
-		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId
-			json { render serializer.serializeAdvices( advices, language ) as JSON }
-		}
+		return language
 	}
 }
