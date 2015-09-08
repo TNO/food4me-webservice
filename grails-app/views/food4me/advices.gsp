@@ -189,38 +189,8 @@
 	<h1 style="font-size: 180%; font-weight: 400">Adviezen</h1>
 	<div id="advices">
 		<ul>
-			<%
-				def adviceCategories = [
-						'L3.1': 'FTO (gen) - advies',
-						'L3.3': 'Verzadigd vet - advies',
-						'L3.30': 'Carotenoides  (gen) - advies',
-						'L3.10': 'Calcium - advies',
-						'L3.19': 'Carotenoides - advies',
-						'L3.7': 'Carbohydraten - advies',
-						'L3.18': 'Cholesterol - advies',
-						'L3.2': 'Vet inname (gen) - advies',
-						'L3.9': 'Vezels - advies',
-						'L3.11': 'ijzer - advies',
-						'L3.12': 'Folaat (gen) - advies',
-						'L3.4': 'Omega 3 (gen) - advies',
-						'L3.8': 'Eiwit - advies',
-						'L3.16': 'Riboflavine - advies',
-						'L3.6': 'Zout - advies',
-						'L3.15': 'Thiamine - advies',
-						'L3.13': 'Vitamine A -advies:',
-						'L3.14': 'Vitamine B12 - advies',
-						'L3.13': 'Vitamine C - advies'
-				]
-
-			%>
-
 			<g:each in="${advices}" var="advice">
 				<li style="list-style: none">
-					<%
-						def type = (advice.code =~ /^([A-Za-z0-9]+\.[0-9]+)\..+$/)[0][1]
-					%>
-
-					<h1>${adviceCategories[type]}</h1>
 					<g:lines string="${translations[advice.code]}" />
 				</li>
 			</g:each>
