@@ -34,10 +34,10 @@ class ImportServiceReferencesSpec extends ImportServiceIntegrationSpec {
 		given: "a list of references to import, in the expected format"
 			// Format: name, group, unit, age lower, age higher, gender, very low (color and upper boundary), low (color and upper boundary), ok (color and upper boundary), high (color and upper boundary), very high (color), 
 			def referencesToImport = [
-				[ "headerline", "to", "be", "ignored" ],
-				[ "secondline", "also", "ignored" ],
-				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
-				[ "Vitamin C", "Nutrient", "mg", "10", "20", "Male", "", "", "Red", "75", "Green", "2000", "Red" ]
+				[ "headerline", "", "", "age", "age", "gender", "", "Very low", "", "Low", "", "OK", "", "High", "", "Very high" ],
+				[ "secondline", "", "", "lower boundary", "upper boundary", "exact match", "", "", "", "", "", "", "", "", "", "" ],
+				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
+				[ "Vitamin C", "Nutrient", "mg", "10", "20", "Male", "", "", "", "Red", "75", "Green", "2000", "Red" ]
 			]
 			InputStream is = getInputStreamFromImportDatastructure(referencesToImport)
 			
@@ -160,12 +160,12 @@ class ImportServiceReferencesSpec extends ImportServiceIntegrationSpec {
 		given: "a list of references to import, in the expected format"
 			// Format: name, group, unit, age lower, age higher, gender, very low (color and upper boundary), low (color and upper boundary), ok (color and upper boundary), high (color and upper boundary), very high (color),
 			def referencesToImport = [
-				[ "headerline", "to", "be", "ignored" ],
-				[ "secondline", "also", "ignored" ],
+                [ "headerline", "", "", "age", "age", "gender", "", "Very low", "", "Low", "", "OK", "", "High", "", "Very high" ],
+                [ "secondline", "", "", "lower boundary", "upper boundary", "exact match", "", "", "", "", "", "", "", "", "", "" ],
 				[],
-				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
+				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
 				[ "abc" ],
-				[ "Vitamin C", "Biomarker", "", "", "", "", "", "", "Red", "90", "Green" ],
+				[ "Vitamin C", "Biomarker", "", "", "", "","", "", "", "Red", "90", "Green" ],
 				[ "Vitamin C", "Nutrient", "mg", "10", "20", "Male" ]
 			]
 			InputStream is = getInputStreamFromImportDatastructure(referencesToImport)
@@ -194,10 +194,10 @@ class ImportServiceReferencesSpec extends ImportServiceIntegrationSpec {
 		given: "a list of references to import, in the expected format"
 			// Format: name, group, unit, age lower, age higher, gender, very low (color and upper boundary), low (color and upper boundary), ok (color and upper boundary), high (color and upper boundary), very high (color),
 			def referencesToImport = [
-				[ "headerline", "to", "be", "ignored" ],
-				[ "secondline", "also", "ignored" ],
-				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
-				[ "Vitamin C", "Nutrient", "mg", "10", "20", "Male", "", "", "Red", "75", "Green", "2000", "Red" ]
+                [ "headerline", "", "", "age", "age", "gender", "", "Very low", "", "Low", "", "OK", "", "High", "", "Very high" ],
+                [ "secondline", "", "", "lower boundary", "upper boundary", "exact match", "", "", "", "", "", "", "", "", "", "" ],
+				[ "Carbohydrate", "Nutrient", "% of total energy", "", "", "", "", "Red", "40", "Amber", "45", "Green", "65", "Amber", "70", "Red" ],
+				[ "Vitamin C", "Nutrient", "mg", "10", "20", "Male", "", "", "", "Red", "75", "Green", "2000", "Red" ]
 			]
 			InputStream is = getInputStreamFromImportDatastructure(referencesToImport)
 			
@@ -217,11 +217,15 @@ class ImportServiceReferencesSpec extends ImportServiceIntegrationSpec {
 			importService.loadGenericReferences(is)
 		
 		then: "references for carbohydarte are imported"
-			ReferenceValue.count == 5
 			ReferenceValue.countBySubject( carbohydrate ) == 5
 			
-		and: "the reference values and colors for vitamin C are discarded"
-			ReferenceValue.countBySubject( vitaminC ) == 0
+		and: "the reference values and colors for vitamin C are also imported"
+			ReferenceValue.countBySubject( vitaminC ) == 3
+
+        and: "each reference value for vitamin C has only a single condition on vitaminC"
+            def values = ReferenceValue.findAllBySubject( vitaminC )
+            assert !values.findAll{ it.conditions.size() != 1 }
+            assert values.collect{ it.conditions[0].subject.entity }.unique() == [ "Vitamin C" ]
 
 	}
 
