@@ -38,7 +38,9 @@ class GenerateAdviceService implements AdviceGenerator {
     @Override
 	public List<Advice> generateAdvice(Measurements measurements,
 			MeasurementStatus measurementStatus, List<Advisable> advisables) {
-		
+        // Clear the log
+        storedLog.clear()
+
 		List<Advice> advices = []
 			
 		advisables.each { advisable ->
@@ -48,8 +50,13 @@ class GenerateAdviceService implements AdviceGenerator {
 
 		advices		
 	}
-		
-	/**
+
+    @Override
+    public Map<String,List<String>> getLogs() {
+        storedLog.get()
+    }
+
+    /**
 	 * Generates a list of advices for a given property, based on the measurements	
 	 * @param advisable
 	 * @param measurements
@@ -109,7 +116,7 @@ class GenerateAdviceService implements AdviceGenerator {
 			MeasuredValue measuredValue = measurements.getValueFor( property )
 			Status status = measurementStatus.getStatus( property )
 			
-			storedLog.trace "Adding advice where clause for " + property + ": " + measuredValue + " / " + status
+			storedLog.info "  Data used for advice: " + property + ": " + measuredValue + " / " + status
 			
 			// If no value is measured and no status is found, we cannot
 			// filter on this property. Skipping immediately

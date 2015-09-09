@@ -5,7 +5,7 @@
 		<title>Food4me advices</title>
 	</head>
 	<body>
-		<h1 style="font-size: 180%; font-weight: 400">Deelnemer: ${userId}</h1>
+	<h1 style="font-size: 180%; font-weight: 400">Deelnemer: ${userId}</h1>
 
 	<h1 style="font-size: 180%; font-weight: 400">Metingen</h1>
 	<div class="measurements">
@@ -196,5 +196,10 @@
 			</g:each>
 		</ul>
 	</div>
+
+	<h1 style="font-size: 180%; font-weight: 400">Logs</h1>
+
+	<g:render template="/logs" model="['logs': flash.logs, 'title': flash.logTitle, levels: [ 'error', 'warn', 'info' ] ]" />
+
 	</body>
 </html>

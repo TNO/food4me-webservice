@@ -29,4 +29,10 @@ interface AdviceGenerator {
 	 * @return
 	 */
 	List<Advice> generateAdvice(Measurements measurements, MeasurementStatus measurementStatus, List<Advisable> advisables)
+
+    /**
+     * Returns log messages regarding the generation of advices. The log messages are grouped by log level
+     * @return
+     */
+    Map<String,List<String>> getLogs()
 }
