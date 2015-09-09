@@ -665,13 +665,14 @@ class ImportService {
 			}
 			
 			// Check if the translation already exists. If so, overwrite
-			def adviceText = AdviceText.findByCodeAndLanguage( adviceCode, language )
+            def adviceCodeToImport = toAdviceCode(adviceCode)
+			def adviceText = AdviceText.findByCodeAndLanguage( adviceCodeToImport, language )
 			if( adviceText ) {
-                storedLog.trace "Overwriting translation for " + adviceCode + " in " + language
+                storedLog.trace "Overwriting translation for " + adviceCodeToImport + " in " + language
 				adviceText.text = line[1]
 			} else {
-                storedLog.trace "Importing new for " + adviceCode + " in " + language
-				adviceText = new AdviceText( code: toAdviceCode(adviceCode), language: language, text: line[1] )
+                storedLog.trace "Importing new for " + adviceCodeToImport + " in " + language
+				adviceText = new AdviceText( code: adviceCodeToImport, language: language, text: line[1] )
 			}
 			
 			objects << adviceText

@@ -41,11 +41,13 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 			assert AdviceText.count == 0
 		
 		and: "the corresponding advices in the database"
+            // Please note, the importer converts dots in the code into underscores, as the
+            // code is also used in the identifier URL that is returned in the HAL representation
 			def carbohydrate = new Property( entity: "Carbohydrate", propertyGroup: "Nutrient", externalId: "2331003" )
 			carbohydrate.save()
-			def advice1 = new Advice( code: "L0.0.1", subject: carbohydrate )
+			def advice1 = new Advice( code: "L0_0_1", subject: carbohydrate )
 			advice1.save()
-			def advice2 = new Advice( code: "L0.2.5", subject: carbohydrate )
+			def advice2 = new Advice( code: "L0_2_5", subject: carbohydrate )
 			advice2.save()
 			
 		when: "importing the texts in German"
@@ -53,15 +55,15 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		
 		then: "texts for both advices are imported"
 			AdviceText.count == 2
-			AdviceText.countByCode( "L0.0.1" ) == 1
-			AdviceText.countByCode( "L0.2.5" ) == 1
+			AdviceText.countByCode( "L0_0_1" ) == 1
+			AdviceText.countByCode( "L0_2_5" ) == 1
 			
 		and: "the advice texts"
-			AdviceText text1 = AdviceText.findByCode( "L0.0.1" )
+			AdviceText text1 = AdviceText.findByCode( "L0_0_1" )
 			text1.language == "de"
 			text1.text == "Jetzt geht loss"
 			
-			AdviceText text2 = AdviceText.findByCode( "L0.2.5" )
+			AdviceText text2 = AdviceText.findByCode( "L0_2_5" )
 			text2.language == "de"
 			text2.text == "Gutentag"
 	}
@@ -83,9 +85,9 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		and: "the corresponding advices in the database"
 			def carbohydrate = new Property( entity: "Carbohydrate", propertyGroup: "Nutrient", externalId: "2331003" )
 			carbohydrate.save()
-			def advice1 = new Advice( code: "L0.0.1", subject: carbohydrate )
+			def advice1 = new Advice( code: "L0_0_1", subject: carbohydrate )
 			advice1.save()
-			def advice2 = new Advice( code: "L0.2.5", subject: carbohydrate )
+			def advice2 = new Advice( code: "L0_2_5", subject: carbohydrate )
 			advice2.save()
 			
 		when: "importing the texts in German"
@@ -93,8 +95,8 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		
 		then: "texts for both advices are imported, other lines are discarded"
 			AdviceText.count == 3
-			AdviceText.countByCode( "L0.0.1" ) == 1
-			AdviceText.countByCode( "L0.2.5" ) == 1
+			AdviceText.countByCode( "L0_0_1" ) == 1
+			AdviceText.countByCode( "L0_2_5" ) == 1
 			AdviceText.countByCode( "Non-existing-code" ) == 1
 	}
 	
@@ -112,9 +114,9 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		and: "the corresponding advices in the database"
 			def carbohydrate = new Property( entity: "Carbohydrate", propertyGroup: "Nutrient", externalId: "2331003" )
 			carbohydrate.save()
-			def advice1 = new Advice( code: "L0.0.1", subject: carbohydrate )
+			def advice1 = new Advice( code: "L0_0_1", subject: carbohydrate )
 			advice1.save()
-			def advice2 = new Advice( code: "L0.2.5", subject: carbohydrate )
+			def advice2 = new Advice( code: "L0_2_5", subject: carbohydrate )
 			advice2.save()
 			
 		when: "importing the texts in German"
@@ -122,7 +124,7 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		
 		then: "texts for the second advice is imported, the first one is discarded"
 			AdviceText.count == 1
-			AdviceText.countByCode( "L0.2.5" ) == 1
+			AdviceText.countByCode( "L0_2_5" ) == 1
 	}
 	
 	void "test importing translations with special characters"() {
@@ -139,9 +141,9 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		and: "the corresponding advices in the database, without text"
 			def carbohydrate = new Property( entity: "Carbohydrate", propertyGroup: "Nutrient", externalId: "2331003" )
 			carbohydrate.save()
-			def advice1 = new Advice( code: "L0.0.1", subject: carbohydrate )
+			def advice1 = new Advice( code: "L0_0_1", subject: carbohydrate )
 			advice1.save()
-			def advice2 = new Advice( code: "L0.2.5", subject: carbohydrate )
+			def advice2 = new Advice( code: "L0_2_5", subject: carbohydrate )
 			advice2.save()
 			
 		when: "importing the texts in English"
@@ -149,8 +151,8 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		
 		then: "texts for both advices are imported"
 			AdviceText.count == 2
-			AdviceText.findByCode( "L0.0.1" )?.text == "ĂĔļ"
-			AdviceText.findByCode( "L0.2.5" )?.text == "ʨΏʡ̈́"
+			AdviceText.findByCode( "L0_0_1" )?.text == "ĂĔļ"
+			AdviceText.findByCode( "L0_2_5" )?.text == "ʨΏʡ̈́"
 	}
 	
 	void "test importing translations that already exist"() {
@@ -165,13 +167,13 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		and: "the corresponding advices in the database"
 			def carbohydrate = new Property( entity: "Carbohydrate", propertyGroup: "Nutrient", externalId: "2331003" )
 			carbohydrate.save()
-			def advice1 = new Advice( code: "L0.0.1", subject: carbohydrate )
+			def advice1 = new Advice( code: "L0_0_1", subject: carbohydrate )
 			advice1.save()
-			def advice2 = new Advice( code: "L0.2.5", subject: carbohydrate )
+			def advice2 = new Advice( code: "L0_2_5", subject: carbohydrate )
 			advice2.save()
 		
 		and: "an existing translation for one of the advices"
-			new AdviceText( code: "L0.0.1", language: "de", advice: advice1, text: "to be overwritten" ).save()
+			new AdviceText( code: "L0_0_1", language: "de", advice: advice1, text: "to be overwritten" ).save()
 			assert AdviceText.count == 1
 
 		when: "importing the texts in German"
@@ -179,11 +181,11 @@ class ImportServiceAdviceTextsSpec extends ImportServiceIntegrationSpec {
 		
 		then: "texts for both advices are imported, and the old translation has been removed"
 			AdviceText.count == 2
-			AdviceText.countByCode( "L0.0.1" ) == 1
-			AdviceText.countByCode( "L0.2.5" ) == 1
+			AdviceText.countByCode( "L0_0_1" ) == 1
+			AdviceText.countByCode( "L0_2_5" ) == 1
 			
 		and: "the advice text for the overwritten translation is correctly imported"
-			AdviceText text1 = AdviceText.findByCode( "L0.0.1" )
+			AdviceText text1 = AdviceText.findByCode( "L0_0_1" )
 			text1.text == "Jetzt geht loss"
 	}
 	
