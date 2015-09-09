@@ -48,15 +48,6 @@ class ComputeStatusService implements StatusComputer {
 				measurementStatus.addStatus( status.entity, status )
 		}
 
-		
-		// Determine status for supplement intake for all nutrients.
-		measurements.getAllPropertiesForPropertyGroup( Property.PROPERTY_GROUP_NUTRIENT ).each { nutrient ->
-			log.trace "Determine status for supplement intake for " + nutrient
-			Status status = determineStatusForSupplement( new ModifiedProperty( property: nutrient, modifier: ModifiedProperty.Modifier.INTAKE_SUPPLEMENTS.id ), nutrient, measurements )
-			if( status != null )
-				measurementStatus.addStatus( status.entity, status )
-		}
-		
 		return measurementStatus;
 	}
 	
@@ -141,31 +132,6 @@ class ComputeStatusService implements StatusComputer {
 		return status
 	}
 
-	/**
-	 * Determines the status for some supplement intake value
-	 * @param valueProperty		Property to retrieve the value for
-	 * @param referenceProperty	Property to determine the reference
-	 * @param measurements		Set of measurements used as input
-	 * @return
-	 */
-	protected Status determineStatusForSupplement( ModifiedProperty valueProperty, Property referenceProperty, Measurements measurements ) {
-		def status = new Status( entity: valueProperty )
-
-		// A very simple check: yes or no
-		def value = measurements.getValueFor( valueProperty )
-		status.value = value
-		
-		if( value && value.type == "numeric" && value.value > 0 ) {
-			status.status = Status.STATUS_YES
-			status.color = Status.Color.GREEN
-		} else {
-			status.status = Status.STATUS_NO
-			status.color = Status.Color.RED
-		}
-
-		return status
-	}
-	
 	
 	protected def generateWhereClause( List<Property> properties, Measurements measurements, int index = 0 ) {
 		List<String> whereClause = []
