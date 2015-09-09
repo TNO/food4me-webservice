@@ -308,8 +308,10 @@ class Food4meController {
                 def userId = params.userId
 
                 // Show the logs on the screen
-                flash.logTitle = "Generate advices"
-                flash.logs = adviceGenerator.getLogs()
+                if( grailsApplication.config.food4me.showLogsForAdvices ) {
+                    flash.logTitle = "Generate advices"
+                    flash.logs = adviceGenerator.getLogs()
+                }
 
                 render view: "advices", model: [ advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId ]
             }
