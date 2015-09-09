@@ -57,6 +57,8 @@ class Food4meController {
 	 */
 	def form() {
 		// Find all properties grouped by propertygroup
+        // Nutrients are stored separately, as their parameter needs a postfix .total
+        // as the system would actually expect a foodgroup as postfix
 		def groupedProperties = [:]
 		def nutrients = []
 		Property.list( sort: 'entity' ).each {
@@ -69,18 +71,6 @@ class Food4meController {
 				groupedProperties[it.propertyGroup] << it
 			}
 		}
-		
-		// Determine the modifiers to allow the user to enter through the form
-		def nutrientModifiers = [
-			ModifiedProperty.Modifier.INTAKE_MEAT_FISH,
-			ModifiedProperty.Modifier.INTAKE_DAIRY,
-			ModifiedProperty.Modifier.INTAKE_SOUP_SAUCES,
-			ModifiedProperty.Modifier.INTAKE_SWEETS_SNACKS,
-			ModifiedProperty.Modifier.INTAKE_FATS_SPREADS,
-			ModifiedProperty.Modifier.INTAKE_POTATOES_RICE_PASTA,
-			ModifiedProperty.Modifier.INTAKE_EGGS,
-			ModifiedProperty.Modifier.INTAKE_SUPPLEMENTS,
-		]
 		
 		// Convert names of the property groups into names of the parameter (groups) in the URL
 		def conversionMap = [
@@ -95,8 +85,7 @@ class Food4meController {
 		// Send output to the view
 		[
 			nutrients: nutrients,
-			nutrientModifiers: nutrientModifiers, 
-			properties: groupedProperties, 
+			properties: groupedProperties,
 			conversionMap: conversionMap,
 			language: params.language ?: "en"
 		]
