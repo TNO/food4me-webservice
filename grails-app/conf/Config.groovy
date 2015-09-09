@@ -160,3 +160,8 @@ food4me.adminPassword = "admin"
  * Default import directory to import the data from
  */
 food4me.importDirectory = ""
+
+/**
+ * Directory to upload and unzip files to. Should be writable by the tomcat user
+ */
+food4me.tmpDirectory = "/tmp"

@@ -20,6 +20,10 @@ log4j.external = {
 food4me {
 	// Directory to import the data from
 	importDirectory = "/tmp/input-food4me"
+
+    // Directory to upload and unzip files to. Should be writable by the tomcat user
+    // Defaults to /tmp
+    tmpDirectory = "/tmp"
 	
 	// Administrator password when first starting the application
 	// See Bootstrap.groovy
