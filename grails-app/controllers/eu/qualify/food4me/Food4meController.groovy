@@ -301,12 +301,13 @@ class Food4meController {
 		def language = getLanguageFromRequest()
 		if( !language ) return
 
-		def references = referenceService.getReferences( measurements.all*.property, measurements )
-		def userId = params.userId
-
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId
+			html {
+                def references = referenceService.getReferences( measurements.all*.property, measurements )
+                def userId = params.userId
+                render view: "advices", model: [ advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId ]
+            }
 			json { render jsonSerializer.serializeAdvices( advices, language ) as JSON }
 			hal { render text: halSerializer.serializeAdvices( advices, language ) as JSON, contentType: "application/hal+json" }
 		}
