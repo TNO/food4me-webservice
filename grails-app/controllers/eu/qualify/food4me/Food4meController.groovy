@@ -47,8 +47,6 @@ class Food4meController {
 	Serializer jsonSerializer
 	Serializer halSerializer
 	
-	def derivedMeasurementsService
-
 	def referenceService
 	
 	/**
@@ -216,7 +214,6 @@ class Food4meController {
 	 */
 	def status() {
 		Measurements measurements = parser.parseMeasurements(params)
-		derivedMeasurementsService.deriveMeasurements(measurements)
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
 
 		// Use content negotiation to output the data
@@ -281,7 +278,6 @@ class Food4meController {
 	 */
 	def advices() {
 		Measurements measurements = parser.parseMeasurements(params)
-		derivedMeasurementsService.deriveMeasurements(measurements)
         println measurements
 
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
