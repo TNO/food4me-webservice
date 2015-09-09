@@ -171,7 +171,6 @@ class ComputeStatusServiceIntegrationSpec extends IntegrationSpec {
 			statuses
 			statuses.getStatus( protein ).status == Status.STATUS_OK
 			statuses.getStatus( proteinFromFood ).status == Status.STATUS_VERY_LOW
-			statuses.getStatus( proteinSupplements ).status == Status.STATUS_YES
 			!statuses.getStatus( proteinFromMeat )
 	}
 	
