@@ -23,6 +23,7 @@ import eu.qualify.food4me.exampledata.ExampleData
 import eu.qualify.food4me.reference.ReferenceCondition
 import eu.qualify.food4me.reference.ReferenceValue
 import grails.plugin.springsecurity.annotation.Secured
+import org.springframework.web.multipart.MultipartHttpServletRequest
 
 @Secured(['ROLE_ADMIN'])
 class AdminController {
@@ -103,10 +104,44 @@ class AdminController {
 		redirect action: "index"
 	}
 	
-	def importAll() { 
-		importService.loadAll()
-		
-		flash.message = "All data is imported from the default directory"
+	def importAll() {
+        // Check whether a file has been uploaded. If so, unzip it
+        // and use those files for importing. If no file was uploaded,
+        // import the default data
+        String directory = null
+        def source = null
+        if( request instanceof MultipartHttpServletRequest ) {
+            def zipFile = request.getFile('zipfile')
+            if( zipFile.empty ) {
+                log.debug( "No file was uploaded for importing data")
+                flash.error = "Please provide a valid zip file with the data to load or choose to upload data from the default directory on the server."
+                redirect action: "index"
+                return
+            }
+
+            // Try to unzip the file to a temporary directory
+            try {
+                directory = importService.unzipUploadedFile(zipFile)?.absolutePath
+            } catch( Exception e ) {
+                log.error( "An error occurred while unzipping the uploaded file", e )
+                flash.error = "The uploaded file could not be unzipped unto the temporary directory. Either the file was invalid or the directory is not writable."
+                redirect action: "index"
+                return
+            }
+
+            source = "the uploaded file"
+        } else {
+            source = "the default directory"
+        }
+
+        importService.storedLog.clear()
+        importService.loadAll(directory)
+
+        // Show the logs on the screen
+        flash.logTitle = "Import all from " + source
+        flash.logs = importService.storedLog.get()
+
+		flash.message = "All data is imported from " + source
 		redirect action: "index"
 	}
 	

@@ -18,3 +18,11 @@ if (typeof jQuery !== 'undefined') {
 		});
 	})(jQuery);
 }
+
+
+// Toggle log messages when the user clicks on the log level
+$(function() {
+	$( ".log_messages h4" ).on( "click", function() {
+		$(this).parent().find( "ul" ).toggle();
+	});
+});
