@@ -16,6 +16,7 @@
  */
 package eu.qualify.food4me.algorithm.SOP3
 
+import eu.qualify.food4me.StoredLog
 import eu.qualify.food4me.ModifiedProperty
 import eu.qualify.food4me.decisiontree.Advice
 import eu.qualify.food4me.interfaces.AdviceGenerator
@@ -31,21 +32,31 @@ import grails.transaction.Transactional
 @Transactional
 class GenerateAdviceService implements AdviceGenerator {
 
-	@Override
+    // Logger object that stored the messages in addition to logging them to log4j
+    StoredLog storedLog = new StoredLog(log)
+
+    @Override
 	public List<Advice> generateAdvice(Measurements measurements,
 			MeasurementStatus measurementStatus, List<Advisable> advisables) {
-		
+        // Clear the log
+        storedLog.clear()
+
 		List<Advice> advices = []
 			
 		advisables.each { advisable ->
-			log.info "Generating advice for " + advisable
+			storedLog.info "Generating advice for " + advisable
 			advices += generateAdviceFor( advisable, measurements, measurementStatus )
 		}
 
 		advices		
 	}
-		
-	/**
+
+    @Override
+    public Map<String,List<String>> getLogs() {
+        storedLog.get()
+    }
+
+    /**
 	 * Generates a list of advices for a given property, based on the measurements	
 	 * @param advisable
 	 * @param measurements
@@ -64,11 +75,11 @@ class GenerateAdviceService implements AdviceGenerator {
 		
 		// If no properties are found, no advices are known for this property. Returning immediately
 		if( !properties ) {
-			log.warn "No advices are known for ${advisable}. Please check the database"
+			storedLog.warn "No advices are known for ${advisable}. Please check the database"
 			return advices
 		}
 		
-		log.trace "  The following properties are needed to determine an advice for " + advisable + ": " + properties
+		storedLog.info "  The following properties are needed to determine an advice for " + advisable + ": " + properties
 			
 		// Create a query that includes all values and retrieve the id and status
 		def hql = "SELECT advice.id FROM Advice as advice INNER JOIN advice.conditions as condition"
@@ -86,11 +97,11 @@ class GenerateAdviceService implements AdviceGenerator {
 		def adviceIds = Advice.executeQuery( hql, hqlParams )
 		
 		if( adviceIds.size() == 0 ) {
-			log.warn "No advices can be determined for ${advisable}. Retrieval parameters are " + hqlParams
+			storedLog.warn "No advices can be determined for ${advisable}. Retrieval parameters are " + hqlParams
 			return advices
 		}
 		
-		log.trace "" + adviceIds?.size() + " advices have been returned for property " + advisable
+		storedLog.trace "" + adviceIds?.size() + " advices have been returned for property " + advisable
 		
 		// Return the advices 
 		adviceIds.collect { Advice.get(it) }
@@ -105,12 +116,12 @@ class GenerateAdviceService implements AdviceGenerator {
 			MeasuredValue measuredValue = measurements.getValueFor( property )
 			Status status = measurementStatus.getStatus( property )
 			
-			log.trace "Adding advice where clause for " + property + ": " + measuredValue + " / " + status
+			storedLog.info "  Data used for advice: " + property + ": " + measuredValue + " / " + status
 			
 			// If no value is measured and no status is found, we cannot
 			// filter on this property. Skipping immediately
 			if( !measuredValue && !status ) {
-				log.warn "No value provided for " + property + ", which may be needed to generate this advice"
+				storedLog.warn "No value provided for " + property + ", which may be needed to generate this advice"
 				return
 			}
 			

@@ -28,4 +28,8 @@ food4me {
 	// Administrator password when first starting the application
 	// See Bootstrap.groovy
 	adminPassword = 'secret'
+
+    // Flag to determine whether to show logs on the advice page
+    // This is only recommended when skilled users are viewing the advice pages
+    showLogsForAdvices = true
 }

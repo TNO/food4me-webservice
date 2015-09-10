@@ -296,17 +296,25 @@ class Food4meController {
 		
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
 		List<Advisable> advisables = advisableDeterminer.determineAdvisables(status, measurements )
-		List<Advice> advices = adviceGenerator.generateAdvice( measurements, status, advisables )
+        List<Advice> advices = adviceGenerator.generateAdvice( measurements, status, advisables )
 
 		def language = getLanguageFromRequest()
 		if( !language ) return
 
-		def references = referenceService.getReferences( measurements.all*.property, measurements )
-		def userId = params.userId
-
 		// Use content negotiation to output the data
 		withFormat {
-			html advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId
+			html {
+                def references = referenceService.getReferences( measurements.all*.property, measurements )
+                def userId = params.userId
+
+                // Show the logs on the screen
+                if( grailsApplication.config.food4me.showLogsForAdvices ) {
+                    flash.logTitle = "Generate advices"
+                    flash.logs = adviceGenerator.getLogs()
+                }
+
+                render view: "advices", model: [ advices: advices, measurements: measurements, status: status, translations: AdviceText.getTranslations( advices, language ), references: references, userId: userId ]
+            }
 			json { render jsonSerializer.serializeAdvices( advices, language ) as JSON }
 			hal { render text: halSerializer.serializeAdvices( advices, language ) as JSON, contentType: "application/hal+json" }
 		}
