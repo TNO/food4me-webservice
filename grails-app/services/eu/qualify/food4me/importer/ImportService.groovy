@@ -151,27 +151,59 @@ class ImportService {
 	
 	/**
 	 * Loads generic references into the database from a CSV inputstream
-	 * @return
+     *
+     * Format:  2 header lines and all other lines contain the actual references
+     *          Column 1:  Property name (e.g. BMI)
+     *          Column 2:  Property group (e.g. Physical)
+     *          Column 3:  Unit (e.g. kg/m2)
+     *
+     *          After those columns, some columns with extra parameters for the references occur.
+     *          Common examples are age and gender. This is specified in the header as follows
+     *            Column x, row 1:  Property name to use as parameter
+     *            Column x, row 2:  Either 'Lower boundary', 'Upper boundary' or 'Exact match' (last one is default)
+     *
+     *          After the extra parameters, an empty column is required to denote the start of the
+     *          actual property values. There are 2 columns for each status (except for the last one).
+     *            Column x, row 1:  Name of the status ('Very low', 'Low', 'OK', 'High', 'Very high')
+     *            Column x, row 2:  'Color'
+     *            Column x + 1, row 2:  'Upper boundary'
+     *
+     *          In each data row, a color and upper boundary for that status can be given. The uppser boundary for
+     *          a status is used as lower boundary for the next status. A reference value will be stored for
+     *          each status having a color. If you don't specify boundary values for those statusses, the system
+     *          may produce unexpected outcome.
+     * @return
 	 */
 	def loadGenericReferences( InputStream inputStream ) {
-		// Retrieve objects for age and gender, as they are needed for storing referenceValues
-		def ageProperty = Property.findByEntity( "Age" )
-		def genderProperty = Property.findByEntity( "Gender" )
-		
 		def references = []
-		
+        def headerLines = []
+        def structure
+        def lineNo = 0
+
 		// The first 2 lines contain the headers
-		inputStream.toCsvReader([skipLines: 2, separatorChar: separatorChar]).eachLine { line ->
-			if( !line || line.size() < 5 ) {
+		inputStream.toCsvReader([skipLines: 0, separatorChar: separatorChar]).eachLine { line ->
+			if( !line || line.size() < 3 ) {
                 storedLog.warn "Skipping line as it has not enough columns: " + line?.size()
 				return
 			}
-			
-			if( !line[0] ) {
+
+            // Combine the first three header lines to be parsed separately
+            if( lineNo++ < 2 ) {
+                headerLines << line
+                return;
+            }
+
+            // If we reach this point, we should first parse the header lines
+            if( headerLines ) {
+                structure = parseReferencesHeaderLines( headerLines )
+                headerLines = null
+            }
+
+            if( !line[0] ) {
                 storedLog.trace "Skipping empty line"
 				return
 			}
-			
+
 			// Find the property that this reference refers to
 			def property = Property.findByEntityAndPropertyGroup( line[0], line[1] )
 			
@@ -179,65 +211,78 @@ class ImportService {
                 storedLog.warn "Cannot find entity " + line[0] + " / " + line[1] + " when importing reference. Skipping this line"
 				return
 			}
-			
-			// Check whether an age and/or gender are given (in columns 4, 5, 6)
-			// TODO generalize this method to support more and other conditions
-			def age = null
-			def gender = null
-			if( line[3] || line[4] ) {
-				age = [ line[3] ?: null, line[4] ?: null ]
-			}
-			gender = line[5] ?: null
-			
-			// Check whether we have the properties for the requested conditions
-			if( age && !ageProperty ) {
-                storedLog.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
-				return
-			}
-			if( gender && !genderProperty ) {
-                storedLog.error "Trying to add a reference condition on age for property " + property + " but the age property doesn't exist"
-				return
-			}
-			
+
+            //
+
 			// Loop through the possible references. Each reference has 2 columns:
 			//		color and upper boundary. The upper boundary is also used as
 			//		the lower boundary of the next
-			def statusses = [ Status.STATUS_VERY_LOW, Status.STATUS_LOW, Status.STATUS_OK, Status.STATUS_HIGH, Status.STATUS_VERY_HIGH ]
 			def currentLowerBoundary = null
-			def currentColumnIndex = 6
 			def color
 			
-			statusses.each { status ->
+			structure.statuses.each { columnNo, status ->
 				// If no status color is given for this status, we skip this status
-				if( line.size() <= currentColumnIndex || !line[ currentColumnIndex ] ) {
+				if( line.size() <= columnNo || !line[ columnNo ] ) {
                     storedLog.trace "Status " + status + " not found for property " + property
-					currentColumnIndex += 2
 					return
 				}
 				
 				// TODO: check for duplicates
-				color = line[ currentColumnIndex ]
-				def higherBoundary = ( line.size() > currentColumnIndex + 1 && line[ currentColumnIndex + 1 ].isBigDecimal() ) ? line[ currentColumnIndex + 1 ].toBigDecimal() : null
+				color = line[ columnNo ]
+				def upperBoundary = ( line.size() > columnNo + 1 && line[ columnNo + 1 ].isBigDecimal() ) ? line[ columnNo + 1 ].toBigDecimal() : null
 				
 				def reference = new ReferenceValue(subject: property, status: status, color: Status.Color.fromString( color ) )
-				
-				if( age ) {
-					reference.addToConditions( new ReferenceCondition( subject: ageProperty, low: age[0], high: age[1], conditionType: ReferenceCondition.TYPE_NUMERIC ) )
-				}
 
-				if( gender ) {
-					reference.addToConditions( new ReferenceCondition( subject: genderProperty, value: gender, conditionType: ReferenceCondition.TYPE_TEXT ) )
-				}
-				
 				// Add the condition on the property itself
-				reference.addToConditions( new ReferenceCondition( subject: property, low: currentLowerBoundary, high: higherBoundary, conditionType: ReferenceCondition.TYPE_NUMERIC ) )
+				reference.addToConditions( new ReferenceCondition( subject: property, low: currentLowerBoundary, high: upperBoundary, conditionType: ReferenceCondition.TYPE_NUMERIC ) )
 
-                storedLog.trace( "Importing reference for " + property + " / " + status + " with " + reference.conditions?.size() + " conditions " + currentLowerBoundary + " / " + higherBoundary  )
+                // Add extra parameters specified in the file
+                structure.parameterColumns.each { propertyId, parameterInfo ->
+                    def parameterProperty = parameterInfo.property
+                    def condition = new ReferenceCondition( subject: parameterProperty )
+
+                    parameterInfo.columns.each { columnInfo ->
+                        def parameterValue = line[columnInfo.column]
+
+                        if( !parameterValue )
+                            return
+
+                        storedLog.trace( "Adding reference condition on " + parameterProperty + ": " + columnInfo.type + " - " + parameterValue  )
+                        switch( columnInfo.type.toLowerCase() ) {
+                            case "lower boundary":
+                                if( parameterValue && parameterValue.isBigDecimal() ) {
+                                    condition.low = parameterValue.toBigDecimal()
+                                    condition.conditionType = ReferenceCondition.TYPE_NUMERIC
+                                }
+                                break;
+                            case "upper boundary":
+                                if( parameterValue && parameterValue.isBigDecimal() ) {
+                                    condition.high = parameterValue.toBigDecimal()
+                                    condition.conditionType = ReferenceCondition.TYPE_NUMERIC
+                                }
+                                break;
+                            case "exact match":
+                            default:
+                                if( parameterValue ) {
+                                    condition.value = parameterValue
+                                    condition.conditionType = ReferenceCondition.TYPE_TEXT
+                                }
+                                break;
+                        }
+
+                    }
+
+                    // Store the condition with the reference, if the conditionType has been set
+                    // This check prevents 'empty' conditions to be added
+                    if( condition.conditionType )
+                        reference.addToConditions(condition)
+                }
+
+                storedLog.trace( "Importing reference for " + property + " / " + status + " with " + reference.conditions?.size() + " conditions " + currentLowerBoundary + " / " + upperBoundary  )
 				references << reference
 				
 				// Prepare for next iteration
-				currentLowerBoundary = higherBoundary
-				currentColumnIndex += 2
+				currentLowerBoundary = upperBoundary
 			}
 			
 			if( references.size() >= batchSize ) {
@@ -518,6 +563,75 @@ class ImportService {
 		
 		decisionTreeStructure
 	}
+
+    protected def parseReferencesHeaderLines( def headerLines ) {
+        def referenceStructure = [
+            parameterColumns: [:],
+            statuses: [:]
+        ]
+
+        if( headerLines.size() != 2 ) {
+            storedLog.error "Invalid number of header lines for references: " + headerLines.size() + " lines. Skipping import of this file"
+            return null
+        }
+
+        if( headerLines[0].size() != headerLines[1].size() ) {
+            storedLog.error "Invalid format of header lines for decision tree: all header lines should be equal length. Sizes are: " + headerLines.collect { it.size() } + ". Skipping import of this file."
+            return null
+        }
+
+        // Skip 3 columns. After that, we expect some parameters to filter on. After that, we expect the statuses to be mentioned
+        def columnNo = 3
+
+        // Denotes the part we are working on: either the parameters or the statuses
+        def part = 0;
+        def property
+
+        while( columnNo < headerLines[0].size() ) {
+            // An empty column denotes the boundary between parameters and statuses
+            if( !headerLines[0][columnNo] && !headerLines[1][columnNo] ) {
+                part = 1;
+                columnNo++;
+                continue;
+            }
+
+            if(part == 0) {
+                // Parse header for parameter
+                def propertyName = headerLines[0][columnNo]
+                def type = headerLines[1][columnNo]
+
+                property = Property.findByEntityIlike( propertyName.trim() )
+
+                if( !property ) {
+                    storedLog.warn "Cannot find property for column ${columnNo}: " + headerLines[0][columnNo] + ". This parameter will not be used in determining references!"
+                    columnNo++
+                    continue
+                }
+
+                if( !referenceStructure.parameterColumns.containsKey(property.id) ) {
+                    referenceStructure.parameterColumns[property.id] = [property: property, columns: []]
+                }
+
+                referenceStructure.parameterColumns[property.id].columns <<
+                [
+                    column: columnNo,
+                    type: type
+                ]
+            } else {
+                // Parse header for status
+
+                // Empty first row is actually not a problem here
+                // However, that is not a status
+                if( headerLines[0][columnNo] ) {
+                    referenceStructure.statuses[columnNo] = headerLines[0][columnNo].trim()
+                }
+            }
+
+            columnNo++
+        }
+
+        referenceStructure
+    }
 	
 	/**
 	 * Loads text for advices from a CSV inputstream. 
@@ -551,13 +665,14 @@ class ImportService {
 			}
 			
 			// Check if the translation already exists. If so, overwrite
-			def adviceText = AdviceText.findByCodeAndLanguage( adviceCode, language )
+            def adviceCodeToImport = toAdviceCode(adviceCode)
+			def adviceText = AdviceText.findByCodeAndLanguage( adviceCodeToImport, language )
 			if( adviceText ) {
-                storedLog.trace "Overwriting translation for " + adviceCode + " in " + language
+                storedLog.trace "Overwriting translation for " + adviceCodeToImport + " in " + language
 				adviceText.text = line[1]
 			} else {
-                storedLog.trace "Importing new for " + adviceCode + " in " + language
-				adviceText = new AdviceText( code: toAdviceCode(adviceCode), language: language, text: line[1] )
+                storedLog.trace "Importing new for " + adviceCodeToImport + " in " + language
+				adviceText = new AdviceText( code: adviceCodeToImport, language: language, text: line[1] )
 			}
 			
 			objects << adviceText
@@ -618,7 +733,7 @@ class ImportService {
         storedLog.info "Start loading generic references " + ( directory ? " from " + directory : "" )
 		
 		// First disable the trigger for advice conditions, as that slows down the import heavily
-        storedLog.info "Disabling trigger on reference_condition"
+        storedLog.debug "Disabling trigger on reference_condition"
 		disableTriggers "reference_condition"
 		
 		try {
@@ -642,7 +757,7 @@ class ImportService {
         storedLog.info "Start loading SNP references " + ( directory ? " from " + directory : "" )
 		
 		// First disable the trigger for advice conditions, as that slows down the import heavily
-        storedLog.info "Disabling trigger on reference_conditoin"
+        storedLog.debug "Disabling trigger on reference_conditoin"
 		disableTriggers "reference_condition"
 		
 		try {

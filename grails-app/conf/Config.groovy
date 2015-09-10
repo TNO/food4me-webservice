@@ -165,3 +165,8 @@ food4me.importDirectory = ""
  * Directory to upload and unzip files to. Should be writable by the tomcat user
  */
 food4me.tmpDirectory = "/tmp"
+
+/**
+ * Flag to decide whether to show logs for advice generation or not
+ */
+food4me.showLogsForAdvices = false

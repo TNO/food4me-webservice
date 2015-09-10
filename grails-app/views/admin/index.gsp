@@ -40,24 +40,7 @@
 				This page allows the administrator to perform certain tasks. Please use with care!
 			</p>
 
-			<g:if test="${flash.logs}">
-				<h3>Import logs: ${flash.logTitle}</h3>
-				<ul class="log_messages">
-					<g:each var="level" in="${flash.logs}">
-						<g:if test="${level.key in [ 'info', 'warn', 'error' ]}">
-							<li>
-								<h4>${level.key}</h4>
-
-								<ul>
-									<g:each var="message" in="${level.value}">
-										<li>${message}</li>
-									</g:each>
-								</ul>
-							</li>
-						</g:if>
-					</g:each>
-				</ul>
-			</g:if>
+			<g:render template="/logs" model="['logs': flash.logs, 'title': "Import logs: " + flash.logTitle, levels: [ 'error', 'warn', 'info' ] ]" />
 
 			<h3>Load data</h3>
 			<table>

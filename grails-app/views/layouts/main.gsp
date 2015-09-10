@@ -33,7 +33,7 @@
 		<g:layoutHead/>
 	</head>
 	<body>
-		<div id="qualifyLogo" role="banner"><a href="http://grails.org"><asset:image src="qualify-logo.png" alt="Qualify"/></a></div>
+		<div id="qualifyLogo" role="banner"><a href="http://www.qualify-fp7.eu"><asset:image src="qualify-logo.png" alt="Qualify"/></a></div>
 		<div id="mainbody">
 			<g:if test="${flash.message}">
 				<div class="message">
