@@ -46,8 +46,6 @@ class Food4meController {
 	Parser parser
 	Serializer jsonSerializer
 	Serializer halSerializer
-	
-	def derivedMeasurementsService
 
 	def referenceService
 	
@@ -81,7 +79,7 @@ class Food4meController {
 			ModifiedProperty.Modifier.INTAKE_EGGS,
 			ModifiedProperty.Modifier.INTAKE_SUPPLEMENTS,
 		]
-
+		
 		// Convert names of the property groups into names of the parameter (groups) in the URL
 		def conversionMap = [
 			(Property.PROPERTY_GROUP_GENERIC): 'generic',
@@ -95,8 +93,8 @@ class Food4meController {
 		// Send output to the view
 		[
 			nutrients: nutrients,
-			nutrientModifiers: nutrientModifiers,
-			properties: groupedProperties,
+			nutrientModifiers: nutrientModifiers, 
+			properties: groupedProperties, 
 			conversionMap: conversionMap,
 			language: params.language ?: "en"
 		]
@@ -227,7 +225,6 @@ class Food4meController {
 	 */
 	def status() {
 		Measurements measurements = parser.parseMeasurements(params)
-		derivedMeasurementsService.deriveMeasurements(measurements)
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
 
 		// Use content negotiation to output the data
@@ -292,8 +289,7 @@ class Food4meController {
 	 */
 	def advices() {
 		Measurements measurements = parser.parseMeasurements(params)
-		derivedMeasurementsService.deriveMeasurements(measurements)
-
+		
 		MeasurementStatus status = statusComputer.computeStatus(measurements)
 		List<Advisable> advisables = advisableDeterminer.determineAdvisables(status, measurements )
         List<Advice> advices = adviceGenerator.generateAdvice( measurements, status, advisables )
