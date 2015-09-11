@@ -93,7 +93,7 @@ class GenerateAdviceService implements AdviceGenerator {
 		hql += " GROUP BY advice.id HAVING COUNT(*) = advice.numConditions"
 		
 		hqlParams[ "referenceProperty" ] = advisable
-		
+
 		def adviceIds = Advice.executeQuery( hql, hqlParams )
 		
 		if( adviceIds.size() == 0 ) {
@@ -108,7 +108,10 @@ class GenerateAdviceService implements AdviceGenerator {
 	}
 	
 	protected def generateWhereClause( List<Measurable> properties, MeasurementStatus measurementStatus, Measurements measurements ) {
-		List<String> whereClause = []
+		// Initialize the whereclause to a false statement. This prevents
+        // advices to popup where no values were given for all properties
+
+        List<String> whereClause = [ " 1 = 0 " ]
 		def whereParams = [:]
 		int index = 0;
 		
