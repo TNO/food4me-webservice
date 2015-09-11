@@ -48,7 +48,7 @@ class GenerateAdviceService implements AdviceGenerator {
 			advices += generateAdviceFor( advisable, measurements, measurementStatus )
 		}
 
-		advices		
+		advices.unique { it.code }
 	}
 
     @Override
