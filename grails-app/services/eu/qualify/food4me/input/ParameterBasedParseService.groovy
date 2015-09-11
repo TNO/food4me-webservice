@@ -64,8 +64,8 @@ class ParameterBasedParseService implements Parser {
 				if( !data || !(data instanceof Map) ) {
 					log.warn "Provided parameters for " + groupName + " are invalid"
 					return
-				} 
-				
+				}
+
 				data.each { propertyName, valueData ->
 					// grails also adds the combination of parameters to the map
 					// Those values include a dot, and should be skipped

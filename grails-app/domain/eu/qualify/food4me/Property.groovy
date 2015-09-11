@@ -30,7 +30,13 @@ class Property implements Measurable, Advisable {
 	public static final String PROPERTY_GROUP_PHYSICAL = "Physical"
 	public static final String PROPERTY_GROUP_SNP = "SNP"
 	public static final String PROPERTY_GROUP_FOODGROUP = "Foodgroup"
-	
+
+    // An output group will not show up in forms, /properties call, nor will
+    // the user be able to specify a value for it.
+    // This is useful when specifying a property as a subject for a decision tree
+    // that is not present as input (e.g. disease)
+    public static final String PROPERTY_GROUP_OUTPUT = "Output"
+
 	/**
 	 * Group to which this property belongs. Can be nutrient, biomarker, physical, generic
 	 */
