@@ -301,7 +301,7 @@ class Food4meController {
 		// Use content negotiation to output the data
 		withFormat {
 			html {
-                def references = referenceService.getReferences( measurements.all*.property, measurements )
+                def references = [] // referenceService.getReferences( measurements.all*.property, measurements )
                 def userId = params.userId
 
                 // Show the logs on the screen
