@@ -58,9 +58,9 @@ class Food4meController {
 		def groupedProperties = [:]
 		def nutrients = []
 		Property.list( sort: 'entity' ).each {
-			if( it.propertyGroup == Property.PROPERTY_GROUP_NUTRIENT ) {
-				nutrients << it
-			} else {
+            if( it.propertyGroup == Property.PROPERTY_GROUP_NUTRIENT ) {
+                nutrients << it
+			} else if( it.propertyGroup != Property.PROPERTY_GROUP_OUTPUT ) {
 				if(!groupedProperties[it.propertyGroup])
 					groupedProperties[it.propertyGroup] = []
 					
@@ -111,6 +111,7 @@ class Food4meController {
 		
 		def properties = criteria.list {
 			and {
+                ne('propertyGroup', Property.PROPERTY_GROUP_OUTPUT)
 				order('propertyGroup')
 				order('entity')
 			}
@@ -300,7 +301,7 @@ class Food4meController {
 		// Use content negotiation to output the data
 		withFormat {
 			html {
-                def references = referenceService.getReferences( measurements.all*.property, measurements )
+                def references = [] // referenceService.getReferences( measurements.all*.property, measurements )
                 def userId = params.userId
 
                 // Show the logs on the screen
