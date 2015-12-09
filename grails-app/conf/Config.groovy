@@ -6,7 +6,8 @@
 //                             "classpath:${appName}-config.properties",
 //                             "classpath:${appName}-config.groovy",
 //                             "file:${userHome}/.grails/${appName}-config.properties",
-                             "file:${userHome}/.grails/${appName}-${grails.util.Environment.current.name ? grails.util.Environment.current.name : 'production'}-config.groovy"
+//                             "file:${userHome}/.grails/${appName}-${grails.util.Environment.current.name ? grails.util.Environment.current.name : 'production'}-config.groovy"
+                             "file:${userHome}/.grails/${appName}-config.groovy"
  ]
 
  if (System.properties["${appName}.config.location"]) {
