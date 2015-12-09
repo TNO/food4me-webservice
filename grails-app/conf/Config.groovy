@@ -2,10 +2,12 @@
 // config files can be ConfigSlurper scripts, Java properties files, or classes
 // in the classpath in ConfigSlurper format
 
- grails.config.locations = [ "classpath:${appName}-config.properties",
-                             "classpath:${appName}-config.groovy",
-                             "file:${userHome}/.grails/${appName}-config.properties",
-                             "file:${userHome}/.grails/${appName}-config.groovy"]
+ grails.config.locations = [
+//                             "classpath:${appName}-config.properties",
+//                             "classpath:${appName}-config.groovy",
+//                             "file:${userHome}/.grails/${appName}-config.properties",
+                             "file:${userHome}/.grails/${appName}-${grails.util.Environment.current.name ? grails.util.Environment.current.name : 'production'}-config.groovy"
+ ]
 
  if (System.properties["${appName}.config.location"]) {
     grails.config.locations << "file:" + System.properties["${appName}.config.location"]

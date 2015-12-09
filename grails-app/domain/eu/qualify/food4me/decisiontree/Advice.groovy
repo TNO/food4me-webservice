@@ -78,25 +78,19 @@ class Advice {
 	 * @return
 	 */
 	public static List<Measurable> getConditionProperties(Property p) {
-		// TODO: Find out why I can't retrieve all conditions with it.advice.subject == p
 		def advices = Advice.findAllBySubject(p)
 		
 		if( !advices )
 			return []
-			
-		def criteria = AdviceCondition.createCriteria()
-		def adviceConditions = criteria.list {
-			advice {
-				'in'( 'id', advices*.id )
-			}
-		}
-		
-		adviceConditions.collect {
+
+        def conditions = AdviceCondition.executeQuery( "SELECT DISTINCT c.subject, c.modifier FROM AdviceCondition c INNER JOIN c.advice a WHERE a.subject = :property", [property: p])
+
+		conditions.collect {
 			// If the advice condition related to a modified property, return a modified property object
-			if( it.modifier ) {
-				new ModifiedProperty( property: it.subject, modifier: it.modifier )
+			if( it[1] ) {
+				new ModifiedProperty( property: it[0], modifier: it[1] )
 			} else {
-				it.subject
+				it[0]
 			} 
 		}.unique() as List
 	}

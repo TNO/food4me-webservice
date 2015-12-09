@@ -7,7 +7,7 @@ beans = {
 	springConfig.addAlias 'statusComputer', 'computeStatusService'
 
 	// AdvisableDeterminer implementation: How to decide on which variables to generate an advice
-	springConfig.addAlias 'advisableDeterminer', 'allParametersAdvisableService'
+	springConfig.addAlias 'advisableDeterminer', 'allPropertiesAdvisableService'
 
 	// AdviceGenerator implementation: Generate advices for the given variables, based on the measurements and their status
 	springConfig.addAlias 'adviceGenerator', 'generateAdviceService'
